@@ -14,11 +14,12 @@
 #define SWING_SINGLE    0x2
 #define OFF             0x0
 #define ON              0x1
+#define ON_TIME_MASK    0x0
 
 #define TIMINGS_LENGTH  200
 #define DATA_BITS_LENGTH 34
 
-typedef enum acParameters {fan,mode,temp,swing} acParameter;
+typedef enum acParameters {fan,mode,temp,swing, onTime} acParameter;
 
 typedef struct airCon {
     uint64_t fullState;
@@ -26,11 +27,12 @@ typedef struct airCon {
     uint64_t mode;
     uint64_t temp;
     uint64_t swing;
+    uint64_t onTime;
     char bitStrings[DATA_BITS_LENGTH][2];
     char manchesterString[DATA_BITS_LENGTH*2];
     int manchesterTimings[TIMINGS_LENGTH]; //64 time frames per packet x 3 + 1 for ending trail
 } ac;
 
-int *getCodes (struct airCon* newAc,int fanV,int modeV,int tempV,int state,int swingV);
+int *getCodes (struct airCon* newAc,int fanV,int modeV,int tempV,int state,int swingV, int onTime);
 
 #endif

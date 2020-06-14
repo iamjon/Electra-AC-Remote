@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-
 #include "electraAcRemoteEncoder.h"
 
 void initializeStruct (struct airCon* newAcPointer)
@@ -13,11 +12,13 @@ void initializeStruct (struct airCon* newAcPointer)
     newAcPointer->mode = MODE_MASK;
     newAcPointer->temp = TEMP_MASK;
     newAcPointer->swing = SWING_MASK;
+    newAcPointer->onTime = ON_TIME_MASK;
     for (i = 0;i < TIMINGS_LENGTH;i++){
         (newAcPointer->manchesterTimings)[i] = 0;
     }
 }
 
+// 29-28: Fan - Low, medium etc.
 void updateFan (int value,struct airCon* newAcPointer)
 {
     newAcPointer->fan &= (value-1);
@@ -25,6 +26,16 @@ void updateFan (int value,struct airCon* newAcPointer)
     newAcPointer->fullState |= newAcPointer->fan;
 }
 
+// 24-23: Zeros onTime?
+void updateOnTime (int value,struct airCon* newAcPointer)
+{
+    newAcPointer->onTime = (0xa);
+    newAcPointer->onTime = (newAcPointer->onTime) << 23;
+    newAcPointer->fullState |= newAcPointer->onTime;
+}
+
+
+// 32-30: Mode - Cool, heat etc.
 void updateMode (int value,struct airCon* newAcPointer)
 {
     newAcPointer->mode &= (value);
@@ -32,6 +43,7 @@ void updateMode (int value,struct airCon* newAcPointer)
     newAcPointer->fullState |= newAcPointer->mode;
 }
 
+// 22-19: Temperature, where 15 is 0000, 30 is 1111
 void updateTemperature (int value,struct airCon* newAcPointer)
 {
     newAcPointer->temp &= (value-15);
@@ -39,6 +51,7 @@ void updateTemperature (int value,struct airCon* newAcPointer)
     newAcPointer->fullState |= newAcPointer->temp;
 }
 
+//    25: Swing On/Off
 void updateSwing (int value,struct airCon* newAcPointer)
 {
     newAcPointer->swing &= (value);
@@ -49,6 +62,9 @@ void updateSwing (int value,struct airCon* newAcPointer)
 void updateParameter (acParameter parameter,int value,struct airCon* newAcPointer)
 {
     switch (parameter) {
+    case onTime:
+		updateOnTime(value,newAcPointer);
+		break;
     case fan:
         updateFan(value,newAcPointer);
         break;
@@ -137,7 +153,7 @@ void convertManchesterStringToManchesterTimings (struct airCon* newAcPointer)
     }
 }
 
-int *getCodes (struct airCon* newAc,int fanV,int modeV,int tempV,int state,int swingV)
+int *getCodes (struct airCon* newAc,int fanV,int modeV,int tempV,int state,int swingV, int timeOnV)
 {
 
     initializeStruct(newAc);
@@ -145,6 +161,7 @@ int *getCodes (struct airCon* newAc,int fanV,int modeV,int tempV,int state,int s
     updateParameter(temp,tempV,newAc);
     updateParameter(mode,modeV,newAc);
     updateParameter(swing,swingV,newAc);
+    updateParameter(onTime,timeOnV,newAc);
 
     convertStateToBitStrings(newAc);
     if (state == ON){
